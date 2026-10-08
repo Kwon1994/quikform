@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { FormField } from "@/types";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
-export default function FormFillPage() {
+function FormFillPageContent() {
   const params = useParams();
   const formId = params.formId as string;
 
@@ -20,7 +20,6 @@ export default function FormFillPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
-  // Load the form from the database
   useEffect(() => {
     supabase
       .from("forms")
@@ -39,16 +38,16 @@ export default function FormFillPage() {
       });
   }, [formId]);
 
-  // Update an answer as the visitor types
   function handleAnswer(fieldId: string, value: string) {
     setAnswers({ ...answers, [fieldId]: value });
   }
 
-  // Submit the form
   async function handleSubmit() {
-    // Check required fields
     for (const field of fields) {
-      if (field.required && (!answers[field.id] || answers[field.id].trim() === "")) {
+      if (
+        field.required &&
+        (!answers[field.id] || answers[field.id].trim() === "")
+      ) {
         setError(`"${field.label}" is required.`);
         return;
       }
@@ -66,7 +65,6 @@ export default function FormFillPage() {
     }
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -75,18 +73,18 @@ export default function FormFillPage() {
     );
   }
 
-  // Submitted state
   if (submitted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
         <div className="text-5xl">✓</div>
         <h1 className="text-2xl font-bold text-slate-900">Thank you!</h1>
-        <p className="text-slate-500">Your response has been recorded.</p>
+        <p className="text-slate-500">
+          Your response has been recorded.
+        </p>
       </div>
     );
   }
 
-  // Error (form not found)
   if (error && fields.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-3">
@@ -96,11 +94,12 @@ export default function FormFillPage() {
     );
   }
 
-  // The actual form
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">{title}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">
+          {title}
+        </h1>
 
         <div className="space-y-5">
           {fields.map((field) => (
@@ -108,20 +107,34 @@ export default function FormFillPage() {
               <CardContent className="pt-4 space-y-2">
                 <Label className="text-sm font-medium">
                   {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </Label>
 
-                {field.type === "text" || field.type === "email" || field.type === "number" ? (
+                {field.type === "text" ||
+                field.type === "email" ||
+                field.type === "number" ? (
                   <Input
-                    type={field.type === "email" ? "email" : field.type === "number" ? "number" : "text"}
+                    type={
+                      field.type === "email"
+                        ? "email"
+                        : field.type === "number"
+                          ? "number"
+                          : "text"
+                    }
                     value={answers[field.id] || ""}
-                    onChange={(e) => handleAnswer(field.id, e.target.value)}
+                    onChange={(e) =>
+                      handleAnswer(field.id, e.target.value)
+                    }
                     placeholder={field.label}
                   />
                 ) : field.type === "textarea" ? (
                   <textarea
                     value={answers[field.id] || ""}
-                    onChange={(e) => handleAnswer(field.id, e.target.value)}
+                    onChange={(e) =>
+                      handleAnswer(field.id, e.target.value)
+                    }
                     rows={4}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     placeholder={field.label}
@@ -129,29 +142,46 @@ export default function FormFillPage() {
                 ) : field.type === "select" ? (
                   <select
                     value={answers[field.id] || ""}
-                    onChange={(e) => handleAnswer(field.id, e.target.value)}
+                    onChange={(e) =>
+                      handleAnswer(field.id, e.target.value)
+                    }
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm bg-white"
                   >
                     <option value="">Select an option...</option>
                     {field.options.map((opt, i) => (
-                      <option key={i} value={opt}>{opt}</option>
+                      <option key={i} value={opt}>
+                        {opt}
+                      </option>
                     ))}
                   </select>
                 ) : field.type === "checkbox" ? (
                   <div className="space-y-2">
                     {field.options.map((opt, i) => (
-                      <label key={i} className="flex items-center gap-2 text-sm">
+                      <label
+                        key={i}
+                        className="flex items-center gap-2 text-sm"
+                      >
                         <input
                           type="checkbox"
-                          checked={(answers[field.id] || "").split(",").includes(opt)}
+                          checked={(answers[field.id] || "")
+                            .split(",")
+                            .includes(opt)}
                           onChange={(e) => {
-                            const current = (answers[field.id] || "").split(",").filter(Boolean);
+                            const current = (answers[field.id] || "")
+                              .split(",")
+                              .filter(Boolean);
+
                             if (e.target.checked) {
-                              handleAnswer(field.id, [...current, opt].join(","));
+                              handleAnswer(
+                                field.id,
+                                [...current, opt].join(",")
+                              );
                             } else {
                               handleAnswer(
                                 field.id,
-                                current.filter((c) => c !== opt).join(",")
+                                current
+                                  .filter((c) => c !== opt)
+                                  .join(",")
                               );
                             }
                           }}
@@ -178,5 +208,19 @@ export default function FormFillPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function FormFillPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <p className="text-slate-500">Loading form...</p>
+        </div>
+      }
+    >
+      <FormFillPageContent />
+    </Suspense>
   );
 }
