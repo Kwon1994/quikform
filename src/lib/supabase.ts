@@ -1,14 +1,6 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-let client: SupabaseClient | null = null;
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder";
 
-function getSupabase() {
-  if (!client) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    client = createClient(url, key);
-  }
-  return client;
-}
-
-export const supabase = getSupabase();
+export const supabase = createClient(url, key);
